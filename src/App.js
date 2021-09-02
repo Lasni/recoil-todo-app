@@ -1,23 +1,42 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import { useSetRecoilState } from "recoil";
+import { useEffect, useState } from "react";
+import { todoListState } from "./atoms/todo";
+import { TodoList } from "./components/TodoList";
+import { NewTodo } from "./components/NewTodo";
 
 function App() {
+  const setTodos = useSetRecoilState(todoListState);
+  const [loading, setLoading] = useState(false);
+
+  // componentDidMount behaviour for fetching from API
+  useEffect(() => {
+    setLoading(true);
+    const fetchTodos = async (url) => {
+      try {
+        const response = await fetch(url);
+        const json = await response.json();
+        const firstFive = json.slice(0, 5);
+        if (localStorage.getItem("todos") === null) {
+          setTodos(firstFive);
+          localStorage.setItem("todos", JSON.stringify(firstFive));
+        } else {
+          setTodos(JSON.parse(localStorage.getItem("todos")));
+        }
+        setLoading(false);
+      } catch (error) {
+        console.log(`Error: ${error}`);
+        setLoading(false);
+      }
+    };
+    fetchTodos("https://jsonplaceholder.typicode.com/todos");
+  }, [setTodos]);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <NewTodo />
+      <br />
+      {loading ? <p>Loading...</p> : <TodoList />}
     </div>
   );
 }
